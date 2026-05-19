@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Formation Node.js + LLM local avec Ollama et Fastify",
   "type": "module",
+  "imports": {
+    "#src/*": "./src/*"
+  },
   "engines": {
     "node": ">=24.0.0"
   },

@@ -1,5 +1,11 @@
 import matter from 'gray-matter'
-import type { ChunkData } from '../types.js'
+
+export interface ChunkData {
+  source: string
+  section: string
+  position: number
+  content: string
+}
 
 const CHUNK_SIZE = 500
 const OVERLAP = 50
