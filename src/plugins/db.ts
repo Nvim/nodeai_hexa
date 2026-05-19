@@ -1,8 +1,6 @@
 import fp from 'fastify-plugin'
 import Database from 'better-sqlite3'
 import { join } from 'node:path'
-import { indexDocs } from '../rag/indexer.js'
-import type { Stmts } from '../types.js'
 
 const DB_PATH = process.env.DB_PATH ?? join(process.cwd(), 'data.db')
 
@@ -37,44 +35,9 @@ async function dbPlugin(app: import('fastify').FastifyInstance) {
     );
   `)
 
-  const stmts: Stmts = {
-    createConv:   db.prepare('INSERT INTO conversations (title) VALUES (?) RETURNING *'),
-    listConvs:    db.prepare(`
-      SELECT c.id, c.title, c.createdAt,
-             COUNT(m.id) AS messageCount
-      FROM conversations c
-      LEFT JOIN messages m ON m.conversationId = c.id
-      GROUP BY c.id ORDER BY c.createdAt DESC
-    `),
-    getConv:      db.prepare('SELECT * FROM conversations WHERE id = ?'),
-    deleteConv:   db.prepare('DELETE FROM conversations WHERE id = ?'),
-    getMessages:  db.prepare('SELECT * FROM messages WHERE conversationId = ? ORDER BY id'),
-    addMessage:   db.prepare('INSERT INTO messages (conversationId, role, content) VALUES (?, ?, ?) RETURNING *'),
-    insertChunk:  db.prepare('INSERT INTO chunks (source, section, position, content, embedding) VALUES (?, ?, ?, ?, ?)'),
-    getAllChunks: db.prepare('SELECT id, source, section, position, content, embedding FROM chunks'),
-    countChunks:  db.prepare('SELECT COUNT(*) as count FROM chunks'),
-  }
-
   app.decorate('db', db)
-  app.decorate('stmts', stmts)
 
   app.addHook('onClose', () => db.close())
-
-  app.addHook('onReady', async () => {
-    const { count } = stmts.countChunks.get() as { count: number }
-    if (count === 0) {
-      app.log.info('RAG: aucun chunk en base, indexation des documents...')
-      try {
-        const { files, chunks } = await indexDocs(db, stmts)
-        app.log.info(`RAG: Indexed ${chunks} chunks from ${files} files`)
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
-        app.log.warn({ err: msg }, 'RAG: indexation échouée (docs vides ou Ollama indisponible)')
-      }
-    } else {
-      app.log.info(`RAG: ${count} chunks déjà indexés`)
-    }
-  })
 }
 
 export default fp(dbPlugin, { name: 'db' })

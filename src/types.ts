@@ -7,6 +7,11 @@ import type {
 } from 'fastify'
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import type Database from 'better-sqlite3'
+import type { ChatUseCase } from '#src/domain/use-cases/ChatUseCase.js'
+import type { ConversationsUseCase } from '#src/domain/use-cases/ConversationsUseCase.js'
+import type { AgentUseCase } from '#src/domain/use-cases/AgentUseCase.js'
+import type { RagSearchUseCase, RagReindexUseCase } from '#src/domain/use-cases/RagUseCases.js'
+import type { RagChatUseCase } from '#src/domain/use-cases/RagChatUseCase.js'
 
 export type App = FastifyInstance<
   RawServerDefault,
@@ -16,6 +21,7 @@ export type App = FastifyInstance<
   TypeBoxTypeProvider
 >
 
+// Legacy types — kept for backward reference, will be removed
 export interface ConversationRow {
   id: number
   title: string
@@ -75,5 +81,11 @@ declare module 'fastify' {
   interface FastifyInstance {
     db: Database.Database
     stmts: Stmts
+    chatUseCase: ChatUseCase
+    conversationsUseCase: ConversationsUseCase
+    agentUseCase: AgentUseCase
+    ragSearchUseCase: RagSearchUseCase
+    ragReindexUseCase: RagReindexUseCase
+    ragChatUseCase: RagChatUseCase
   }
 }
